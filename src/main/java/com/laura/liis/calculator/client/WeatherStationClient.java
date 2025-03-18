@@ -1,7 +1,6 @@
 package com.laura.liis.calculator.client;
 
 import com.laura.liis.calculator.dto.ObservationsDto;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -18,8 +17,8 @@ public class WeatherStationClient {
     private static final String URL = "https://www.ilmateenistus.ee/ilma_andmed/xml/observations.php";
     private final RestTemplate restTemplate;
 
-    public void getWeatherData() {
-        log.warn("Help");
+    public ObservationsDto getWeatherData() {
+        log.warn("GETTING DATA");
         final var request = RequestEntity
                 .get(URL)
                 .accept(MediaType.APPLICATION_XML)
@@ -29,5 +28,6 @@ public class WeatherStationClient {
                 .exchange(request, ObservationsDto.class);
         log.warn(response.getBody().toString());
 
+        return null;
     }
 }
