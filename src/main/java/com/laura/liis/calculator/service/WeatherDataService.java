@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @Slf4j
 public class WeatherDataService {
@@ -24,21 +26,27 @@ public class WeatherDataService {
     @Scheduled(fixedRate = 6000)
     @Transactional
     public void updateWeatherData() {
+        log.info("Scheduled task triggered");
         try {
             // Fetch the data from the weather station
             ObservationsDto observations = weatherStationClient.getWeatherData();
+            log.info("Received weather data: {}", weatherStationClient.getWeatherData());
+
             if (observations != null && observations.getStation() != null) {
                 // Loop through each station and save the weather data
                 for (StationDto stationData : observations.getStation()) {
                     WeatherDataEntity weatherDataEntity = getWeatherDataEntity(stationData);
 
+
                     // Save the weather data to the database using the repository
-                    log.error("Saving weather data: ");
-                    weatherDataRepository.save(weatherDataEntity);  // Save WeatherDataEntity object
+                    weatherDataRepository.save(weatherDataEntity);
+                    log.info("Saving Weather Data: {}", weatherDataEntity);
+
+
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace(); // Handle any errors and log them
+            log.error("Error fetching weather data", e);
         }
 
     }
@@ -50,6 +58,7 @@ public class WeatherDataService {
         weatherDataEntity.setAirtemperature(stationData.getAirtemperature());
         weatherDataEntity.setWindspeed(stationData.getWindspeed());
         weatherDataEntity.setPhenomenon(stationData.getPhenomenon());
+
         return weatherDataEntity;
     }
 

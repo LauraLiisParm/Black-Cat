@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Entity
@@ -17,6 +19,7 @@ public class WeatherDataEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
+
     @NotNull
     @Column(name = "station", nullable = false)
     private String station;
@@ -26,14 +29,15 @@ public class WeatherDataEntity {
     private String wmocode;
 
     @NotNull
-    @Column(name= "airtemeperature", nullable = false)
+    @Column(name= "airtemperature", nullable = false)
     private double airtemperature;
 
     @NotNull
     @Column(name = "windspeed", nullable = false)
-    private String windspeed;
+    private double windspeed;
 
     @NotNull
     @Column(name="phenomenon", nullable = false)
     private String phenomenon;
+
 }

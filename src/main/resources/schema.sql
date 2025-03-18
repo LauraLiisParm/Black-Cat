@@ -7,6 +7,6 @@ CREATE TABLE WEATHER_DATA
     station        VARCHAR NOT NULL,
     wmocode        VARCHAR NOT NULL,
     airtemperature double,
-    windspeed      VARCHAR NOT NULL,
+    windspeed      double,
     phenomenon     VARCHAR NOT NULL
 );
