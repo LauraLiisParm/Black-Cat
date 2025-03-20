@@ -25,7 +25,7 @@ public class WeatherDataService {
     @Autowired
     private WeatherStationClient weatherStationClient;
 
-    @Scheduled(fixedRate = 36000)
+    @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
     @Transactional
     public void updateWeatherData() {
         log.info("Scheduled task triggered");

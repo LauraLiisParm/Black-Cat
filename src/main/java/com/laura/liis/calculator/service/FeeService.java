@@ -24,7 +24,7 @@ public class FeeService {
         // Business logic for Regional Base Fee (RBF) based on city and vehicle type
 
         switch (station) {
-            case "Tallnn-Harku":
+            case "Tallinn-Harku":
                 if ("Car".equalsIgnoreCase(vehicleType)) {
                     rbf = 4.0;
                 } else if ("Scooter".equalsIgnoreCase(vehicleType)) {
