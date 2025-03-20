@@ -19,7 +19,6 @@ public class WeatherDataEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
-
     @NotNull
     @Column(name = "station", nullable = false)
     private String station;

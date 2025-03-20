@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -23,32 +25,34 @@ public class WeatherDataService {
     @Autowired
     private WeatherStationClient weatherStationClient;
 
-    @Scheduled(fixedRate = 6000)
+    @Scheduled(fixedRate = 36000)
     @Transactional
     public void updateWeatherData() {
         log.info("Scheduled task triggered");
         try {
             // Fetch the data from the weather station
             ObservationsDto observations = weatherStationClient.getWeatherData();
-            log.info("Received weather data: {}", weatherStationClient.getWeatherData());
+            log.info("Received weather data: {}", observations);
 
             if (observations != null && observations.getStation() != null) {
-                // Loop through each station and save the weather data
+                // Define the filter criteria (e.g., a list of station names you want to include)
+                List<String> selectedStationNames = List.of("Tallinn-Harku", "Tartu-Tõravere", "Pärnu");  // Example list of station names you want to include
+
+                // Loop through each station, but only process the selected stations
                 for (StationDto stationData : observations.getStation()) {
-                    WeatherDataEntity weatherDataEntity = getWeatherDataEntity(stationData);
+                    // Check if the station name is in the selected list
+                    if (selectedStationNames.contains(stationData.getName())) {
+                        WeatherDataEntity weatherDataEntity = getWeatherDataEntity(stationData);
 
-
-                    // Save the weather data to the database using the repository
-                    weatherDataRepository.save(weatherDataEntity);
-                    log.info("Saving Weather Data: {}", weatherDataEntity);
-
-
+                        // Save the weather data to the database using the repository
+                        weatherDataRepository.save(weatherDataEntity);
+                        log.info("Saving Weather Data: {}", weatherDataEntity);
+                    }
                 }
             }
         } catch (Exception e) {
             log.error("Error fetching weather data", e);
         }
-
     }
 
     private static WeatherDataEntity getWeatherDataEntity(StationDto stationData) {
@@ -61,6 +65,8 @@ public class WeatherDataService {
 
         return weatherDataEntity;
     }
+
+
 
 
 }
