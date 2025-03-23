@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +42,25 @@ public class WeatherDataService {
                 // Loop through each station, but only process the selected stations
                 for (StationDto stationData : observations.getStation()) {
                     // Check if the station name is in the selected list
+
+                    /*
+                    vaatad dbsse, kas selle linna kohta on andmed olemas
+                    kui andmed olemas, siis uuendad olemasolevat kirjet
+                    kui andmeid pole, siis tekitad uue kirje
+                     */
+
+                    weatherDataRepository.findByStation(stationData.getName())
+                            .ifPresentOrElse(
+                                    entity -> {
+                                        entity.setAirtemperature(stationData.getAirtemperature());
+                                        entity.setWmocode(stationData.getWmocode());
+                                        entity.setWindspeed(stationData.getWindspeed());
+                                        entity.setPhenomenon(stationData.getPhenomenon());
+                                        weatherDataRepository.save(entity);
+                                    },
+                                    () -> weatherDataRepository.save(getWeatherDataEntity(stationData))
+                            );
+                    /*
                     if (selectedStationNames.contains(stationData.getName())) {
                         WeatherDataEntity weatherDataEntity = getWeatherDataEntity(stationData);
 
@@ -48,6 +68,7 @@ public class WeatherDataService {
                         weatherDataRepository.save(weatherDataEntity);
                         log.info("Saving Weather Data: {}", weatherDataEntity);
                     }
+                    */
                 }
             }
         } catch (Exception e) {
