@@ -1,11 +1,8 @@
 package com.laura.liis.calculator.controller;
 
 import com.laura.liis.calculator.dto.DeliveryFeeRequestDto;
-import com.laura.liis.calculator.entity.WeatherDataEntity;
 import com.laura.liis.calculator.service.FeeService;
-import com.laura.liis.calculator.service.WeatherDataService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,18 +10,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class FeeCalculatorController {
 
-    @Autowired
-    private FeeService feeService;
+    private final FeeService feeService;
 
-    @GetMapping("/station/{station}")
-    public WeatherDataEntity getWeatherData(@PathVariable String station) {
-        return feeService.getWeatherDataByStation(station);
-    }
-
-
+    /**
+     *
+     * @param request
+     * @return
+     */
     @GetMapping("/calculate")
-    public double calculateDeliveryFee(@RequestParam String station, @RequestParam String vehicleType) {
-        // Call the FeeService to calculate the total delivery fee
-        return feeService.calculateDeliveryFee(station, vehicleType);
+    public double calculateDeliveryFee(@RequestParam DeliveryFeeRequestDto request) {
+        return feeService.calculateDeliveryFee(request.getStation(), request.getVehicleType());
     }
 }

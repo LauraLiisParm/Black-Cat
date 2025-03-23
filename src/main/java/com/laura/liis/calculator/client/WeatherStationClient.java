@@ -1,11 +1,8 @@
 package com.laura.liis.calculator.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.laura.liis.calculator.dto.ObservationsDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -21,17 +18,13 @@ public class WeatherStationClient {
     private final RestTemplate restTemplate;
 
     public ObservationsDto getWeatherData() {
-        log.warn("GETTING DATA");
         final var request = RequestEntity
                 .get(URL)
                 .accept(MediaType.APPLICATION_XML)
                 .build();
 
-
         ResponseEntity<ObservationsDto> response = restTemplate
                 .exchange(request, ObservationsDto.class);
-        log.warn(response.getBody().toString());
-
 
         return response.getBody();
     }

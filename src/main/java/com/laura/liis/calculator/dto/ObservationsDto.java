@@ -20,9 +20,8 @@ import java.util.List;
 @JacksonXmlRootElement(localName = "observations")
 public class ObservationsDto {
 
-    @JacksonXmlCData
-    @JacksonXmlProperty(localName = "timestamp")
-    private String timestamp;
+    @JacksonXmlProperty(isAttribute = true)
+    private Long timestamp;
 
     @JacksonXmlElementWrapper(useWrapping = false)
     @JsonProperty("station")  // Mapping the list of "station" elements to the `station` property

@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface WeatherDataRepository extends JpaRepository<WeatherDataEntity, String>{
+public interface WeatherDataRepository extends JpaRepository<WeatherDataEntity, Long>{
     Optional<WeatherDataEntity> findByStation(String station);
 }

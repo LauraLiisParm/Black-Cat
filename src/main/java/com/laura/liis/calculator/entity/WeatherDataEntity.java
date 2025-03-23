@@ -1,21 +1,24 @@
 package com.laura.liis.calculator.entity;
 
+import com.laura.liis.calculator.enums.City;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "weather_data")
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class WeatherDataEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "weather_data_id_gen")
-    @SequenceGenerator(name = "weather_data_id_gen", sequenceName = "weather_data_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -38,5 +41,9 @@ public class WeatherDataEntity {
     @NotNull
     @Column(name="phenomenon", nullable = false)
     private String phenomenon;
+
+    @NotNull
+    @Column(name = "timestamp", nullable = false)
+    private Instant timestamp;
 
 }

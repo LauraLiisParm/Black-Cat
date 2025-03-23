@@ -1,17 +1,12 @@
 package com.laura.liis.calculator.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.stereotype.Service;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@Service
+@Data
 public class DeliveryFeeRequestDto {
-    private String city;
+    @JsonProperty("city")
+    private String station;
+    @JsonProperty("vehicleType")
     private String vehicleType;
 }

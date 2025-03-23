@@ -1,94 +1,81 @@
 package com.laura.liis.calculator.service;
 
-import com.laura.liis.calculator.client.WeatherStationClient;
 import com.laura.liis.calculator.dto.ObservationsDto;
 import com.laura.liis.calculator.dto.StationDto;
 import com.laura.liis.calculator.entity.WeatherDataEntity;
+import com.laura.liis.calculator.enums.City;
 import com.laura.liis.calculator.repository.WeatherDataRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class WeatherDataService {
 
-    @Autowired
-    private WeatherDataRepository weatherDataRepository;
+    private final WeatherDataRepository weatherDataRepository;
 
-    @Autowired
-    private WeatherStationClient weatherStationClient;
-
-    @Scheduled(fixedRate = 60, timeUnit = TimeUnit.SECONDS)
     @Transactional
-    public void updateWeatherData() {
-        log.info("Scheduled task triggered");
-        try {
-            // Fetch the data from the weather station
-            ObservationsDto observations = weatherStationClient.getWeatherData();
-            log.info("Received weather data: {}", observations);
+    public void updateWeatherData(ObservationsDto observationsDto) {
+        Instant timestamp = Instant.ofEpochMilli(observationsDto.getTimestamp());
+        List<StationDto> stations = observationsDto.getStation() == null ? List.of() : observationsDto.getStation();
 
-            if (observations != null && observations.getStation() != null) {
-                // Define the filter criteria (e.g., a list of station names you want to include)
-                List<String> selectedStationNames = List.of("Tallinn-Harku", "Tartu-Tõravere", "Pärnu");  // Example list of station names you want to include
+        List<StationDto> filteredStations = stations.stream()
+                .filter(s -> isTallinnTartuOrParnu(s.getName()))
+                .peek(stationDto -> stationDto.setName(City.fromCityName(stationDto.getName()).name()))
+                .toList();
 
-                // Loop through each station, but only process the selected stations
-                for (StationDto stationData : observations.getStation()) {
-                    // Check if the station name is in the selected list
 
-                    /*
-                    vaatad dbsse, kas selle linna kohta on andmed olemas
-                    kui andmed olemas, siis uuendad olemasolevat kirjet
-                    kui andmeid pole, siis tekitad uue kirje
-                     */
-
-                    weatherDataRepository.findByStation(stationData.getName())
-                            .ifPresentOrElse(
-                                    entity -> {
-                                        entity.setAirtemperature(stationData.getAirtemperature());
-                                        entity.setWmocode(stationData.getWmocode());
-                                        entity.setWindspeed(stationData.getWindspeed());
-                                        entity.setPhenomenon(stationData.getPhenomenon());
-                                        weatherDataRepository.save(entity);
-                                    },
-                                    () -> weatherDataRepository.save(getWeatherDataEntity(stationData))
-                            );
-                    /*
-                    if (selectedStationNames.contains(stationData.getName())) {
-                        WeatherDataEntity weatherDataEntity = getWeatherDataEntity(stationData);
-
-                        // Save the weather data to the database using the repository
-                        weatherDataRepository.save(weatherDataEntity);
-                        log.info("Saving Weather Data: {}", weatherDataEntity);
-                    }
-                    */
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error fetching weather data", e);
-        }
+        filteredStations.forEach(station -> weatherDataRepository.findByStation(station.getName())
+                .ifPresentOrElse(
+                        entity -> updateExistingWeatherData(station, entity, timestamp),
+                        () -> createNewWeatherDataEntry(station, timestamp)
+                ));
     }
 
-    private static WeatherDataEntity getWeatherDataEntity(StationDto stationData) {
+    private WeatherDataEntity createNewWeatherDataEntry(StationDto station, Instant timestamp) {
+        return weatherDataRepository.save(WeatherDataEntity.builder()
+                .station(station.getName())
+                .phenomenon(station.getPhenomenon())
+                .windspeed(station.getWindspeed())
+                .wmocode(station.getWmocode())
+                .airtemperature(station.getAirtemperature())
+                .timestamp(timestamp)
+                .build());
+    }
+
+    private void updateExistingWeatherData(StationDto station, WeatherDataEntity entity, Instant timestamp) {
+        weatherDataRepository.save(entity.toBuilder()
+                .station(station.getName())
+                .phenomenon(station.getPhenomenon())
+                .windspeed(station.getWindspeed())
+                .wmocode(station.getWmocode())
+                .airtemperature(station.getAirtemperature())
+                .timestamp(timestamp)
+                .build());
+    }
+
+    private static boolean isTallinnTartuOrParnu(String stationName) {
+        return Arrays.stream(City.values())
+                .anyMatch(city -> city.getCityName().equals(stationName));
+    }
+
+    private static WeatherDataEntity getWeatherDataEntity(StationDto stationData, Long timestamp) {
         WeatherDataEntity weatherDataEntity = new WeatherDataEntity();
         weatherDataEntity.setStation(stationData.getName());  // Assuming "name" maps to "station"
         weatherDataEntity.setWmocode(stationData.getWmocode());
         weatherDataEntity.setAirtemperature(stationData.getAirtemperature());
         weatherDataEntity.setWindspeed(stationData.getWindspeed());
         weatherDataEntity.setPhenomenon(stationData.getPhenomenon());
-
+        weatherDataEntity.setTimestamp(Instant.ofEpochMilli(timestamp));
         return weatherDataEntity;
     }
-
-
-
 
 }
 
