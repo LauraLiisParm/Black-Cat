@@ -1,6 +1,5 @@
 package com.laura.liis.calculator.controller;
 
-import com.laura.liis.calculator.dto.DeliveryFeeRequestDto;
 import com.laura.liis.calculator.service.FeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,7 @@ public class FeeCalculatorController {
      * @return
      */
     @GetMapping("/calculate")
-    public double calculateDeliveryFee(@RequestParam DeliveryFeeRequestDto request) {
-        return feeService.calculateDeliveryFee(request.getStation(), request.getVehicleType());
+    public double calculateDeliveryFee(@RequestParam String city, @RequestParam String vehicleType) {
+        return feeService.calculateDeliveryFee(city, vehicleType);
     }
 }

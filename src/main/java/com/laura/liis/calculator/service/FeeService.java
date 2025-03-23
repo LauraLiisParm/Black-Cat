@@ -1,17 +1,15 @@
 package com.laura.liis.calculator.service;
 
-import com.laura.liis.calculator.dto.DeliveryFeeRequestDto;
 import com.laura.liis.calculator.entity.WeatherDataEntity;
 import com.laura.liis.calculator.enums.City;
+import com.laura.liis.calculator.exception.UnsupportedCityException;
+import com.laura.liis.calculator.exception.UsageOfSelectedVehicleIsForbiddenException;
 import com.laura.liis.calculator.exception.WeatherDataNotFoundException;
 import com.laura.liis.calculator.repository.WeatherDataRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
-import static com.laura.liis.calculator.enums.City.*;
 
 @RequiredArgsConstructor
 @Service
@@ -20,61 +18,69 @@ public class FeeService {
     private final WeatherDataRepository weatherDataRepository;
 
 
-    private double calculateRegionalBaseFee(DeliveryFeeRequestDto request) {
+    private double calculateRegionalBaseFee(String city, String vehicleType) {
         double regionalBaseFee = 0.0;
 
-       Optional<WeatherDataEntity> data = weatherDataRepository.findByStation(request.getStation());
-
-       if(data.isEmpty()){
-           throw new WeatherDataNotFoundException("No weather data founf for " + request.getStation());
-       }
-       WeatherDataEntity weatherInfo = data.get();
-
-       String city = request.getStation();
-
-       City station = fromCityName(city);
-
-        switch (station) {
-            case TALLINN:
-                if ("CAR".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 4.0;
-                } else if ("SCOOTER".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 3.5;
-                } else if ("BIKE".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 3.0;
-                }
-                break;
-            case TARTU:
-                if ("CAR".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 3.5;
-                } else if ("SCOOTER".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 3.0;
-                } else if ("BIKE".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 2.5;
-                }
-                break;
-            case PÄRNU:
-                if ("CAR".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 3.0;
-                } else if ("SCOOTER".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 2.5;
-                } else if ("BIKE".equalsIgnoreCase(request.getVehicleType())) {
-                    regionalBaseFee = 2.0;
-                }
-                break;
-            default:
-                throw new RuntimeException("Unsupported city: " + request.getStation());
-        }
+        regionalBaseFee = switch (City.valueOf(city)) {
+            case TALLINN -> calculateBaseFeeForTallinn(city, vehicleType, regionalBaseFee);
+            case TARTU -> calculateBaseFeeForTartu(city, vehicleType, regionalBaseFee);
+            case PÄRNU -> calculateBaseFeeForPärnu(city, vehicleType, regionalBaseFee);
+            default -> throw new UnsupportedCityException("Unsupported city: " + city);
+        };
 
         return regionalBaseFee;
     }
 
-    private double calculateTemperatureFee(DeliveryFeeRequestDto request) {
+    private static double calculateBaseFeeForPärnu(String city, String vehicleType, double regionalBaseFee) {
+        if ("CAR".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 3.0;
+        } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 2.5;
+        } else if ("BIKE".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 2.0;
+        }
+        return regionalBaseFee;
+    }
 
-        double airTemperature = weatherDataRepository.findByStation(get);
+    private static double calculateBaseFeeForTartu(String city, String vehicleType, double regionalBaseFee) {
+        if ("CAR".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 3.5;
+        } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 3.0;
+        } else if ("BIKE".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 2.5;
+        }
+        return regionalBaseFee;
+    }
+
+    private static double calculateBaseFeeForTallinn(String city, String vehicleType, double regionalBaseFee) {
+        if ("CAR".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 4.0;
+        } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 3.5;
+        } else if ("BIKE".equalsIgnoreCase(vehicleType)) {
+            regionalBaseFee = 3.0;
+        }
+        return regionalBaseFee;
+    }
+
+    private WeatherDataEntity fetchWeatherDataForStation(String stationName) {
+        Optional<WeatherDataEntity> data = weatherDataRepository.findByStation(stationName);
+
+        if(data.isEmpty()){
+            throw new WeatherDataNotFoundException("No weather data found for " + stationName);
+        }
+        return data.get();
+    }
+
+    private double calculateTemperatureFee(String city, String vehicleType) {
+
+        WeatherDataEntity weatherDataEntity = fetchWeatherDataForStation(city);
+
+        double airTemperature = weatherDataEntity.getAirtemperature();
 
 
-        if ("SCOOTER".equalsIgnoreCase(request.getVehicleType()) || "BIKE".equalsIgnoreCase(request.getVehicleType())) {
+        if ("SCOOTER".equalsIgnoreCase(vehicleType) || "BIKE".equalsIgnoreCase(vehicleType)) {
             if (airTemperature < -10) {
                 return 1.0;
             } else if (airTemperature >= -10 && airTemperature <= 0) {
@@ -84,53 +90,49 @@ public class FeeService {
         return 0.0;
     }
 
-    private double calculateWindSpeedFee(String station, String request.getVehicleType()) {
-        WeatherDataEntity weatherData = weatherDataRepository.findByStation(station)
-                .orElseThrow(() -> new WeatherDataNotFoundException("Weather data not found for station = " + station));
+    private double calculateWindSpeedFee(String city, String vehicleType) {
+        WeatherDataEntity weatherDataEntity = weatherDataRepository.findByStation(city)
+                .orElseThrow(() -> new WeatherDataNotFoundException("Weather data not found for station = " + city));
 
-        double windSpeed = weatherData.getWindspeed();
+        double windSpeed = weatherDataEntity.getWindspeed();
 
-        if ("BIKE".equalsIgnoreCase(request.getVehicleType())) {
+        if ("BIKE".equalsIgnoreCase(vehicleType)) {
             if (windSpeed > 20) {
-                throw new RuntimeException("Usage of selected vehicle type is forbidden due to high wind speed.");
-            } else if (windSpeed >= 10 && windSpeed <= 20) {
+                throw new UsageOfSelectedVehicleIsForbiddenException("Usage of selected vehicle type is forbidden.");
+            } else if (windSpeed >= 10) {
                 return 0.5;
             }
         }
         return 0.0;
     }
 
-    private double calculateWeatherPhenomenonFee(String station, String request.getVehicleType()) {
-        WeatherDataEntity weatherData = weatherDataRepository.findByStation(station)
-                .orElseThrow(() -> new WeatherDataNotFoundException("Weather data not found for station = " + station));
+    private double calculateWeatherPhenomenonFee(String city, String vehicleType) {
+        WeatherDataEntity weatherDataEntity = weatherDataRepository.findByStation(city)
+                .orElseThrow(() -> new WeatherDataNotFoundException("Weather data not found for station = " + city));
 
-        String phenomenon = weatherData.getPhenomenon();
+        String phenomenon = weatherDataEntity.getPhenomenon();
 
-        if ("SCOOTER".equalsIgnoreCase(request.getVehicleType()) || "BIKE".equalsIgnoreCase(request.getVehicleType())) {
-            switch (phenomenon.toLowerCase()) {
-                case "snow":
-                case "sleet":
-                    return 1.0;
-                case "rain":
-                    return 0.5;
-                case "glaze":
-                case "hail":
-                case "thunder":
-                    throw new RuntimeException("Usage of selected vehicle type is forbidden due to dangerous weather phenomenon.");
-                default:
-                    return 0.0;
+        if ("SCOOTER".equalsIgnoreCase(vehicleType) || "BIKE".equalsIgnoreCase(vehicleType)) {
+
+            if (phenomenon.toLowerCase().contains("snow") || phenomenon.toLowerCase().contains("sleet")) {
+                return 1.0;
+            } else if (phenomenon.toLowerCase().contains("rain")) {
+                return 0.5;
+            } else if (phenomenon.toLowerCase().contains("glaze") || phenomenon.toLowerCase().contains("hail") || phenomenon.toLowerCase().contains("thunder")) {
+                throw new UsageOfSelectedVehicleIsForbiddenException("Usage of selected vehicle type is forbidden.");
             }
         }
         return 0.0;
     }
 
-    public double calculateDeliveryFee(DeliveryFeeRequestDto request) {
-        double rbf = calculateRegionalBaseFee(request.getStation(), request.getVehicleType());
-        double atef =
-        double wsef =
-        double wpef =
+    public double calculateDeliveryFee(String city, String vehicleType) {
 
-        return rbf + atef + wsef + wpef;
+        double regionalBaseFee = calculateRegionalBaseFee(city, vehicleType);
+        double airTemperatureFee = calculateTemperatureFee(city, vehicleType);
+        double windSpeedFee = calculateWindSpeedFee(city, vehicleType);
+        double weatherPhenomenonFee = calculateWeatherPhenomenonFee(city, vehicleType);
+
+        return regionalBaseFee + airTemperatureFee + windSpeedFee + weatherPhenomenonFee;
     }
 
 }
