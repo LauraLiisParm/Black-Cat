@@ -31,7 +31,7 @@ public class WeatherDataEntity {
     private String wmocode;
 
     @NotNull
-    @Column(name= "airtemperature", nullable = false)
+    @Column(name = "airtemperature", nullable = false)
     private double airtemperature;
 
     @NotNull
@@ -39,7 +39,7 @@ public class WeatherDataEntity {
     private double windspeed;
 
     @NotNull
-    @Column(name="phenomenon", nullable = false)
+    @Column(name = "phenomenon", nullable = false)
     private String phenomenon;
 
     @NotNull
