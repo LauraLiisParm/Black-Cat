@@ -20,15 +20,11 @@ public class FeeService {
 
 
     private double calculateRegionalBaseFee(String cityName, String vehicleType) {
-        double regionalBaseFee = 0.0;
-
-        regionalBaseFee = switch (getCity(cityName)) {
-            case TALLINN -> calculateBaseFeeForTallinn(vehicleType, regionalBaseFee);
-            case TARTU -> calculateBaseFeeForTartu(vehicleType, regionalBaseFee);
-            case PÄRNU -> calculateBaseFeeForPärnu(vehicleType, regionalBaseFee);
+         return switch (getCity(cityName)) {
+            case TALLINN -> calculateBaseFeeForTallinn(vehicleType);
+            case TARTU -> calculateBaseFeeForTartu(vehicleType);
+            case PÄRNU -> calculateBaseFeeForPärnu(vehicleType);
         };
-
-        return regionalBaseFee;
     }
 
     private static City getCity(String cityName) {
@@ -41,8 +37,9 @@ public class FeeService {
         return city;
     }
 
-    private static double calculateBaseFeeForPärnu(String vehicleType, double regionalBaseFee) {
+    private static double calculateBaseFeeForPärnu(String vehicleType) {
 
+        double regionalBaseFee;
         if ("CAR".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.0;
         } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
@@ -55,7 +52,8 @@ public class FeeService {
         return regionalBaseFee;
     }
 
-    private static double calculateBaseFeeForTartu(String vehicleType, double regionalBaseFee) {
+    private static double calculateBaseFeeForTartu(String vehicleType) {
+        double regionalBaseFee;
         if ("CAR".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.5;
         } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
@@ -68,7 +66,8 @@ public class FeeService {
         return regionalBaseFee;
     }
 
-    private static double calculateBaseFeeForTallinn(String vehicleType, double regionalBaseFee) {
+    private static double calculateBaseFeeForTallinn(String vehicleType) {
+        double regionalBaseFee;
         if ("CAR".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 4.0;
         } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
