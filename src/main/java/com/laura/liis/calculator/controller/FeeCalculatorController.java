@@ -11,9 +11,19 @@ public class FeeCalculatorController {
 
     private final FeeService feeService;
 
-    /// @param cityName,    City where delivery needs to be done.
-    /// @param vehicleType, Type of vehicle used for delivering.
-    /// @return feeService.calculateDeliveryFee(city, vehicleType), returns calculated fee for specific city and vehicle type in current weather conditions.
+    /**
+    * @param cityName,    City where delivery needs to be done.
+    * @param vehicleType, Type of vehicle used for delivering.
+    * @return feeService.calculateDeliveryFee(city, vehicleType), returns calculated fee for specific city and vehicle type in current weather conditions.
+     */
+
+
+    /**
+     * Returns Delivery Fee based on city where delivery happens, vehicle used for delivery and current weather conditions in the specified city
+     * @param cityName
+     * @param vehicleType
+     * @return
+     */
     @GetMapping("/calculate")
     public double calculateDeliveryFee(@RequestParam String cityName, @RequestParam String vehicleType) {
         return feeService.calculateDeliveryFee(cityName, vehicleType);
