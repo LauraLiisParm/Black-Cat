@@ -4,6 +4,7 @@ import com.laura.liis.calculator.entity.WeatherDataEntity;
 import com.laura.liis.calculator.enums.City;
 import com.laura.liis.calculator.exception.UnsupportedCityException;
 import com.laura.liis.calculator.exception.UsageOfSelectedVehicleIsForbiddenException;
+import com.laura.liis.calculator.exception.UnsupportedVehicleTypeException;
 import com.laura.liis.calculator.exception.WeatherDataNotFoundException;
 import com.laura.liis.calculator.repository.WeatherDataRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,48 +19,64 @@ public class FeeService {
     private final WeatherDataRepository weatherDataRepository;
 
 
-    private double calculateRegionalBaseFee(String city, String vehicleType) {
+    private double calculateRegionalBaseFee(String cityName, String vehicleType) {
         double regionalBaseFee = 0.0;
 
-        regionalBaseFee = switch (City.valueOf(city)) {
-            case TALLINN -> calculateBaseFeeForTallinn(city, vehicleType, regionalBaseFee);
-            case TARTU -> calculateBaseFeeForTartu(city, vehicleType, regionalBaseFee);
-            case PÄRNU -> calculateBaseFeeForPärnu(city, vehicleType, regionalBaseFee);
-            default -> throw new UnsupportedCityException("Unsupported city: " + city);
+        regionalBaseFee = switch (getCity(cityName)) {
+            case TALLINN -> calculateBaseFeeForTallinn(vehicleType, regionalBaseFee);
+            case TARTU -> calculateBaseFeeForTartu(vehicleType, regionalBaseFee);
+            case PÄRNU -> calculateBaseFeeForPärnu(vehicleType, regionalBaseFee);
         };
 
         return regionalBaseFee;
     }
 
-    private static double calculateBaseFeeForPärnu(String city, String vehicleType, double regionalBaseFee) {
+    private static City getCity(String cityName) {
+        City city;
+        try {
+            city = City.valueOf(cityName);
+        } catch (IllegalArgumentException e) {
+            throw new UnsupportedCityException("City is not supported! City = " + cityName);
+        }
+        return city;
+    }
+
+    private static double calculateBaseFeeForPärnu(String vehicleType, double regionalBaseFee) {
+
         if ("CAR".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.0;
         } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 2.5;
         } else if ("BIKE".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 2.0;
+        } else {
+            throw new UnsupportedVehicleTypeException("This vehicle type is not supported: " + vehicleType);
         }
         return regionalBaseFee;
     }
 
-    private static double calculateBaseFeeForTartu(String city, String vehicleType, double regionalBaseFee) {
+    private static double calculateBaseFeeForTartu(String vehicleType, double regionalBaseFee) {
         if ("CAR".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.5;
         } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.0;
         } else if ("BIKE".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 2.5;
+        } else {
+            throw new UnsupportedVehicleTypeException("This vehicle type is not supported: " + vehicleType);
         }
         return regionalBaseFee;
     }
 
-    private static double calculateBaseFeeForTallinn(String city, String vehicleType, double regionalBaseFee) {
+    private static double calculateBaseFeeForTallinn(String vehicleType, double regionalBaseFee) {
         if ("CAR".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 4.0;
         } else if ("SCOOTER".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.5;
         } else if ("BIKE".equalsIgnoreCase(vehicleType)) {
             regionalBaseFee = 3.0;
+        } else {
+            throw new UnsupportedVehicleTypeException("This vehicle type is not supported: " + vehicleType);
         }
         return regionalBaseFee;
     }
@@ -67,7 +84,7 @@ public class FeeService {
     private WeatherDataEntity fetchWeatherDataForStation(String stationName) {
         Optional<WeatherDataEntity> data = weatherDataRepository.findByStation(stationName);
 
-        if(data.isEmpty()){
+        if (data.isEmpty()) {
             throw new WeatherDataNotFoundException("No weather data found for " + stationName);
         }
         return data.get();
@@ -116,7 +133,7 @@ public class FeeService {
 
             if (phenomenon.toLowerCase().contains("snow") || phenomenon.toLowerCase().contains("sleet")) {
                 return 1.0;
-            } else if (phenomenon.toLowerCase().contains("rain")) {
+            } else if (phenomenon.toLowerCase().contains("rain") || phenomenon.toLowerCase().contains("shower")) {
                 return 0.5;
             } else if (phenomenon.toLowerCase().contains("glaze") || phenomenon.toLowerCase().contains("hail") || phenomenon.toLowerCase().contains("thunder")) {
                 throw new UsageOfSelectedVehicleIsForbiddenException("Usage of selected vehicle type is forbidden.");
@@ -127,6 +144,10 @@ public class FeeService {
 
     public double calculateDeliveryFee(String city, String vehicleType) {
 
+        return sumOfFees(city, vehicleType);
+    }
+
+    private double sumOfFees(String city, String vehicleType) {
         double regionalBaseFee = calculateRegionalBaseFee(city, vehicleType);
         double airTemperatureFee = calculateTemperatureFee(city, vehicleType);
         double windSpeedFee = calculateWindSpeedFee(city, vehicleType);
@@ -134,7 +155,6 @@ public class FeeService {
 
         return regionalBaseFee + airTemperatureFee + windSpeedFee + weatherPhenomenonFee;
     }
-
 }
 
 

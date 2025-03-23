@@ -19,8 +19,7 @@ public class WeatherDataUpdateJob {
     private final WeatherStationClient weatherStationClient;
     private final WeatherDataService weatherDataService;
 
-    //@Scheduled(cron = "0 15 * * * * ") //TODO: Uncomment me!
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(cron = "0 15 * * * * ")
     public void execute() {
         log.error("Updating Weather data");
         ObservationsDto weatherData = weatherStationClient.getWeatherData();
