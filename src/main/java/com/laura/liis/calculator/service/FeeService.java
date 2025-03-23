@@ -90,12 +90,8 @@ public class FeeService {
         return data.get();
     }
 
-    private double calculateTemperatureFee(String city, String vehicleType) {
-
-        WeatherDataEntity weatherDataEntity = fetchWeatherDataForStation(city);
-
+    private double calculateTemperatureFee(String vehicleType, WeatherDataEntity weatherDataEntity) {
         double airTemperature = weatherDataEntity.getAirtemperature();
-
 
         if ("SCOOTER".equalsIgnoreCase(vehicleType) || "BIKE".equalsIgnoreCase(vehicleType)) {
             if (airTemperature < -10) {
@@ -107,10 +103,7 @@ public class FeeService {
         return 0.0;
     }
 
-    private double calculateWindSpeedFee(String city, String vehicleType) {
-        WeatherDataEntity weatherDataEntity = weatherDataRepository.findByStation(city)
-                .orElseThrow(() -> new WeatherDataNotFoundException("Weather data not found for station = " + city));
-
+    private double calculateWindSpeedFee(String vehicleType, WeatherDataEntity weatherDataEntity) {
         double windSpeed = weatherDataEntity.getWindspeed();
 
         if ("BIKE".equalsIgnoreCase(vehicleType)) {
@@ -123,10 +116,7 @@ public class FeeService {
         return 0.0;
     }
 
-    private double calculateWeatherPhenomenonFee(String city, String vehicleType) {
-        WeatherDataEntity weatherDataEntity = weatherDataRepository.findByStation(city)
-                .orElseThrow(() -> new WeatherDataNotFoundException("Weather data not found for station = " + city));
-
+    private double calculateWeatherPhenomenonFee(String vehicleType, WeatherDataEntity weatherDataEntity) {
         String phenomenon = weatherDataEntity.getPhenomenon();
 
         if ("SCOOTER".equalsIgnoreCase(vehicleType) || "BIKE".equalsIgnoreCase(vehicleType)) {
@@ -143,15 +133,15 @@ public class FeeService {
     }
 
     public double calculateDeliveryFee(String city, String vehicleType) {
-
         return sumOfFees(city, vehicleType);
     }
 
     private double sumOfFees(String city, String vehicleType) {
         double regionalBaseFee = calculateRegionalBaseFee(city, vehicleType);
-        double airTemperatureFee = calculateTemperatureFee(city, vehicleType);
-        double windSpeedFee = calculateWindSpeedFee(city, vehicleType);
-        double weatherPhenomenonFee = calculateWeatherPhenomenonFee(city, vehicleType);
+        WeatherDataEntity weatherDataEntity = fetchWeatherDataForStation(city);
+        double airTemperatureFee = calculateTemperatureFee(vehicleType, weatherDataEntity);
+        double windSpeedFee = calculateWindSpeedFee(vehicleType, weatherDataEntity);
+        double weatherPhenomenonFee = calculateWeatherPhenomenonFee(vehicleType, weatherDataEntity);
 
         return regionalBaseFee + airTemperatureFee + windSpeedFee + weatherPhenomenonFee;
     }
